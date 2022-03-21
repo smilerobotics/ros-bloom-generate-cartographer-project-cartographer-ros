@@ -1,0 +1,26 @@
+name: Check update
+
+on:
+  schedule:
+    - cron: '0 19 * * *'
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      is_updated: ${{ steps.check.outputs.is_updated }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: check
+        uses: smilerobotics/actions-check-vcs-repositories-update@v1
+        id: check
+        with:
+          vcs_setting_file: ./vcs.repos
+          working_directory: ./src
+          command_output: ~/is_updated
+          cache_key_prefix: is-updated
+  build:
+    needs: [check]
+    if: ${{ needs.check.outputs.is_updated == 'true' }}
+    uses: smilerobotics/ros-bloom-generate-cartographer-project-cartographer-ros/.github/workflows/build.yml@main
